@@ -910,10 +910,10 @@ class nuSqlString{
 
         $select_string    = $sql;
         $from_string      = stristr($sql, ' from ');
-        $where_string     = stristr($sql, ' where ');
-        $groupBy_string   = stristr($sql, ' group by ');
-        $having_string    = stristr($sql, ' having ');
-        $orderBy_string   = stristr($sql, ' order by ');
+        $where_string     = $this->getOuter($sql, ' where ');
+        $groupBy_string   = $this->getOuter($sql, ' group by ');
+        $having_string    = $this->getOuter($sql, ' having ');
+        $orderBy_string   = $this->getOuter($sql, ' order by ');
         
         $from             = str_replace($where_string,   '', $from_string);
         $from             = str_replace($groupBy_string, '', $from);
@@ -944,6 +944,22 @@ class nuSqlString{
 
     	$this->buildSQL();
     }
+
+	private function strristr($h, $n, $before = false) {
+		$rpos = strripos($h, $n);
+		if($rpos === false) return false;
+		return ($before == false) ? substr($h, $rpos) : substr($h, 0, $rpos);
+	}
+
+	private function getOuter($h, $n) {
+		$return = $this->strristr($h, $n);
+		while($return !== false && substr_count($return, '(') != substr_count($return, ')') ){
+			$return2 = $this->strristr(str_replace($return, '', $h), $n);
+			$return = ($return2 !== FALSE)? $return2.$return : $return2;
+		}
+
+		return $return;
+	}
 
     public function restoreDefault($pString){
 
