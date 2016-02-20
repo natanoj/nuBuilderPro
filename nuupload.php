@@ -2,7 +2,7 @@
 
 require_once('nucommon.php'); 
 
-$uploaddir      = sys_get_temp_dir();
+$uploaddir      = ini_get('upload_tmp_dir') ? ini_get('upload_tmp_dir') : sys_get_temp_dir();
 $dq             = '"';
 $J              = array();
 
