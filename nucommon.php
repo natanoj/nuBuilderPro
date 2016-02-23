@@ -588,7 +588,7 @@ function nuTextFormats(){
 
 //-----number formats
 	$format = array();
- 	for ($i=0; $i < 33; $i++) {
+ 	for ($i=0; $i < 34; $i++) {
 		$format[$i] = new stdClass;
 	}
 	
