@@ -1504,7 +1504,7 @@ function nuEmailValidateAddress($email) {
 
 
 
-function nuSendEmail($to, $from, $fromname, $content, $subject, $filelist, $html = false) {
+function nuSendEmail($to, $from, $fromname, $content, $subject, $filelist, $html = false, $cc = "", $bcc = "") {
 
     $toname                                      = '';
 	//$html                                        = false;
@@ -1566,6 +1566,20 @@ function nuSendEmail($to, $from, $fromname, $content, $subject, $filelist, $html
 				$mail->AddAddress($toArray[$i], $thisToName);
 			}
 		}
+
+        if($cc != ""){
+            $ccArray = explode(',',$cc);
+            foreach($ccArray as $ccAddress){
+                $mail->AddCC($ccAddress);
+            }
+        }
+
+        if($bcc != ""){
+            $bccArray = explode(',',$bcc);
+            foreach($bccArray as $bccAddress){
+                $mail->AddBCC($bccAddress);
+            }
+        }
 
 		$mail->WordWrap              = $wordWrap;
 		$mail->IsHTML($html);
