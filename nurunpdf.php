@@ -249,6 +249,10 @@ function nuBuildReport($PDF, $REPORT, $TABLE_ID){
     for($g = count($groups) - 1 ; $g > -1 ; $g--){
 
         $S                                  = new nuSECTION($PDF, $lastROW, $REPORT, 3 + $g, 1, $sectionTop);                   //-- section footers
+		// last group doesn't need a page break
+		if($g == 0) {
+			nuRemovePageBreak($S);
+		}
         $sectionTop                         = $S->buildSection();
 
     }
@@ -1117,5 +1121,10 @@ function nuRemoveFiles(){
     
 }
 
+function nuRemovePageBreak($S){
+   if( property_exists($S->LAY->groups[$S->group]->sections[$S->section], 'page_break')) {
+		$S->LAY->groups[$S->group]->sections[$S->section]->page_break = 0;
+	}
+}
 //-- was 1150 lines long
 ?>
