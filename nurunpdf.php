@@ -1122,8 +1122,9 @@ function nuRemoveFiles(){
 }
 
 function nuRemovePageBreak($S){
-   if( property_exists($S->LAY->groups[$S->group]->sections[$S->section], 'page_break')) {
-		$S->LAY->groups[$S->group]->sections[$S->section]->page_break = 0;
+    if( property_exists($S->LAY->groups[$S->group]->sections[$S->section], 'page_break')) {
+        if(count($S->LAY->groups[1]->sections[1]->objects) == 0)
+	       $S->LAY->groups[$S->group]->sections[$S->section]->page_break = 0;
 	}
 }
 //-- was 1150 lines long
