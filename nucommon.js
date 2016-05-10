@@ -1293,6 +1293,11 @@ function nuBuildForm(w){
                     if(b!= window.nuFORM) nuSession.setBreadCrumb(window.nuFORM);
 
                     window.browseQuery = obj.browseQuery;
+                    var titles = [];
+                    for(var i = 1 ; i < obj.objects.length ; i++){
+                        titles.push(obj.objects[i].title);
+                    }
+                    window.browseTitles = titles;
 
                     nuBuildBrowseForm(obj);
             });
