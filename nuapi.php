@@ -1752,6 +1752,7 @@ function nuGetBrowseForm($hashData) {
     $J['searchColumns']    = $data['searchColumns'];
     $J['filterStrings']    = $data['filterStrings'];
     $J['formats']          = json_encode(nuTextFormats());
+    $J['browseQuery']      = $data['sql'];
 
     return json_encode($J);
 }

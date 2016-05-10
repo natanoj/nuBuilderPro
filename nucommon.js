@@ -1291,7 +1291,9 @@ function nuBuildForm(w){
                     
                     var b = window.nuSession.breadCrumb[window.nuSession.breadCrumb.length-1];                            
                     if(b!= window.nuFORM) nuSession.setBreadCrumb(window.nuFORM);
-                    
+
+                    window.browseQuery = obj.browseQuery;
+
                     nuBuildBrowseForm(obj);
             });
         }
