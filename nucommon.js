@@ -389,6 +389,8 @@ function nuOpenForm(parentFormID, parentRecordID, formID, recordID, formTitle, f
     
     if(arguments.length == 6){
         w.filter       = filter;
+        if(filter == '#RECORD_ID#')
+            w.filter = window.nuFORM.record_id;
     }
     if(recordID == '' || recordID == 'null'){
         w.call_type    = 'getbrowseform';
