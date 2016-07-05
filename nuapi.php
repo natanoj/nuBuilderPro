@@ -899,7 +899,9 @@ function nuValidField($FIELD, $validFields, $formInfo, $primary_key, $ROW, $main
             if (($validFields[$i]->no_blanks == '1' or $validFields[$i]->no_duplicates == '1' ) and $val == '') {                  //-- cannot be left blank
                 $ERR = nuGetTabAndTitle($fld, $mainForm, $parentID);
 				if ($mainForm) {                                                                                               //-- main form
-					$ERR->message = "$ERR->title " . nuTranslate('cannot be left blank') . "..  (" . nuTranslate('TAB') . " : $ERR->tab)";
+					// $ERR->message = "$ERR->title " . nuTranslate('cannot be left blank') . "..  (" . nuTranslate('TAB') . " : $ERR->tab)";
+					// changed by SG to error messages less to read
+					$ERR->message = "$ERR->title " . nuTranslate('cannot be left blank '); 
 				} else {
 					$ERR->message = "$ERR->title " . nuTranslate('in subform') . " " . nuTranslate('on row') . " $ROW " . nuTranslate('cannot be left blank') . "..";
 				}
@@ -920,7 +922,10 @@ function nuValidField($FIELD, $validFields, $formInfo, $primary_key, $ROW, $main
                 if ($r[0] != '') {                                                                                             //-- duplicate record
                     $ERR = nuGetTabAndTitle($fld, $mainForm, $parentID);
 					if ($mainForm) {                                                                                       //-- main form
-						$ERR->message = nuTranslate('There is already a record with a') . " $ERR->title " . nuTranslate('with a value of') . " $val..  (" . nuTranslate('TAB') . " : $ERR->tab)";
+						// $ERR->message = nuTranslate('There is already a record with a') . " $ERR->title " . nuTranslate('with a value of') . " $val..  (" . nuTranslate('TAB') . " : $ERR->tab)";
+						// changed by SG to error messages less to read
+						$ERR->message = nuTranslate('There is already a record with a') . " $ERR->title " . nuTranslate('with a value of ') . $val;						
+
 					} else {
 						$ERR->message = nuTranslate('There is already a record with a') . " $ERR->title " . nuTranslate('with a value of') . " $val " . nuTranslate('in subform') . " $formInfo->form_name " . nuTranslate('on row') . " $ROW..  (" . nuTranslate('TAB') . " : $ERR->tab)";
 					}
