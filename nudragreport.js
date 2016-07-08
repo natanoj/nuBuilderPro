@@ -5,11 +5,13 @@ function nuLoadReport(b){
 
 	window.addEventListener("keydown", function(e) {
 		// space and arrow keys
-		if([32, 38, 40].indexOf(e.keyCode) > -1) {
+		if([38, 40].indexOf(e.keyCode) > -1) {
 			e.preventDefault();
 		}
 	}, false);
 
+	//window.off('keydown');
+	
 	if($('#nuDragDialog').length == 0){
 		
 		nuDIALOG.dialog = '';
@@ -1073,6 +1075,31 @@ function nuObjectDialog(){
 	nuBlankMultipleValues(S);
 	$('#nuDragDialog').css('height', top + 20);
 
+    $("#dialogTitleWords").append('<img src="./trash_can.png" height="17px" width="17px" id="deleteObject" value="Delete" onclick="deleteSelectedObjects()"/>');
+	$("#deleteObject").css('position','relative');
+	$("#deleteObject").css('left','270px');
+}
+
+function deleteSelectedObjects(){
+	
+	var sel = document.getElementsByClassName('nuDragSelected');
+			
+	for(var i = 0 ; i < sel.length ; i ++){
+		
+		window.nuDragR.removeObject(sel[i].id);
+
+	}
+	
+	nuREPORT.selected = [];
+	nuLoadReport();
+}
+
+function findWithAttr(array, attr, value) {
+    for(var i = 0; i < array.length; i += 1) {
+        if(array[i][attr] === value) {
+            return i;
+        }
+    }
 }
 
 function nuBlankMultipleValues(S){
