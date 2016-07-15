@@ -1468,7 +1468,7 @@ function nuGetEditForm($hashData) {
         $J['form_javascript'] = $J['form_javascript'] . "\n\n\n//-- Custom Javascript Added via the PHP function : nuAddJavascript()\n\n\n" . $GLOBALS['EXTRAJS'];
     }
 
-    $data                     = nuGetObjectsForOneRecord('form', $formID, nuV('record_id'), $hashData);
+    $data                     = nuGetObjectsForOneRecord($formID, nuV('record_id'), $hashData);
     $buttons                  = nuGetEditButtons($formID, $hashData);
     $J['buttons']             = $buttons;
 
@@ -2228,29 +2228,17 @@ function nuBrowseWhereClause($searchFields, $searchString, $returnArray = false)
     }
 }
 
-function nuGetObjectsForOneRecord($parent, $parentID, $recordID, $hashData) {
+function nuGetObjectsForOneRecord($parentID, $recordID, $hashData) {
 
-    if ($parent == 'form') {
-        $s = "
-            SELECT 
-                sfo_table as parent_table, 
-                sfo_primary_key as parent_primary_key, 
-                sfo_sql as the_sql 
-            FROM zzzsys_form 
-            WHERE zzzsys_form_id = '$parentID'
-        ";
-    } else { //-- subform
-        $s = "
-            SELECT 
-                sob_subform_table as parent_table, 
-                sob_subform_primary_key as parent_primary_key, 
-                sob_subform_sql as the_sql 
-            FROM zzzsys_object 
-            WHERE zzzsys_object_id = '$parentID'
-        ";
-        $hashData['SUBFORM_RECORD_ID'] = $recordID;
-    }
-	
+	$s = "
+		SELECT 
+			sfo_table as parent_table, 
+			sfo_primary_key as parent_primary_key, 
+			sfo_sql as the_sql 
+		FROM zzzsys_form 
+		WHERE zzzsys_form_id = '$parentID'
+	";
+    	
     $t               = nuRunQuery($s);
 	
     if (nuErrorFound()) {
@@ -2401,37 +2389,109 @@ function nuGetSubform($subformID, $o, $hashData) {
 
 function nuSubformPageRecords($subformID, $o, $hashData) {  //-- get subform rows
     
+	$fieldArray = array();
+	$t = nuRunQuery("
+        SELECT * 
+        FROM zzzsys_object 
+        WHERE sob_zzzsys_form_id = '$subformID' 
+        ORDER BY 
+            sob_all_tab_number, 
+            sob_all_column_number, 
+            sob_all_order_number
+    ");
+	while($fields = db_fetch_object($t)){
+		$fieldArray[] = $fields;
+	}
+
     $count = 0;
     $SF    = array();
     $s = "
         SELECT 
             sob_subform_table       as parent_table, 
             sob_subform_primary_key as parent_primary_key, 
-            sob_subform_sql
+            sob_subform_sql AS the_sql
         FROM zzzsys_object 
         WHERE zzzsys_object_id = ?
     ";
     $t     = nuRunQuery($s, array($subformID));
+
     if (nuErrorFound()) {
         return;
     }
 	
     $f     = db_fetch_object($t);
-    $s     = nuReplaceHashes($f->sob_subform_sql, $hashData);
+	
+    $s     = nuReplaceHashes($f->the_sql, $hashData);
 
     $t     = nuRunQuery($s);
     if (nuErrorFound()) {
         return;
     }
+	
+	//get initial record values
     $SF['records'] = array();
-
     while ($r = db_fetch_array($t)) {
+		$REC = array();
+		$REC[] = $r[$f->parent_primary_key];
+		foreach($fieldArray as $field) {
+			if($field->sob_all_type != 'dropdown' && $field->sob_all_type != 'lookup') {
+				$REC[]= nuFormatValue($r[$field->sob_all_name],$field->sob_text_format);
+			} else {
+				$REC[]= $r[$field->sob_all_name];
+			}
 
-        $data            = nuGetObjectsForOneRecord('subform', $subformID, $r[$f->parent_primary_key], $hashData);
-        $SF['records'][] = $data['records'];
+		}
+        $SF['records'][] = $REC;
     }
+	
+	//fill out lookup values
+	$i = 0;
+	foreach($fieldArray as $field) {
+		if($field->sob_all_type == 'lookup') {
+			$lookupFormQry      = nuRunQuery("SELECT * FROM zzzsys_form WHERE `zzzsys_form_id` = '$field->sob_lookup_zzzsys_form_id'");
+			
+			if (nuErrorFound()) {
+				return;
+			}
+			
+			$lookupFormObj     					= db_fetch_object($lookupFormQry);
+			$lookupFormObj->sfo_custom_code_run_before_browse 	= nuGetSafePHP('sfo_custom_code_run_before_browse', $lookupFormObj->zzzsys_form_id, $lookupFormObj->sfo_custom_code_run_before_browse);
+			$bb    					= nuReplaceHashes($lookupFormObj->sfo_custom_code_run_before_browse, $hashData);
+			eval($bb);
 
-    $data            = nuGetObjectsForOneRecord('subform', $subformID, '-1', $hashData);  //-- add a blank record
+			$SQL   = new nuSqlString($lookupFormObj->sfo_sql);
+
+			$lookupSQL = "
+				SELECT 
+					$field->sob_lookup_id_field, 
+					$field->sob_lookup_code_field, 
+					$field->sob_lookup_description_field 
+					$SQL->from 
+			";
+
+			$lookupSQL     = nuReplaceHashes($lookupSQL, $hashData);
+
+			$lookupQry     = nuRunQuery($lookupSQL);
+			if (nuErrorFound()) {
+				return;
+			}
+			
+			while($lookupObj    = db_fetch_row($lookupQry)){
+				$lookupValues = '["'.$lookupObj[0].'","'.$lookupObj[1].'","'.$lookupObj[2].'"]';
+				$j = 0;
+				foreach($SF['records'] as $record) {
+					if($record[$i+1] == $lookupObj[0]) {
+						$SF['records'][$j][$i+1] = $lookupValues;
+					}
+					$j++;
+				}
+			}			
+		}
+		
+		$i++;
+    }
+	
+    $data            = nuGetSubformObjectsForOneRecord($subformID, '-1', $fieldArray, $r, $f, $hashData);  //-- add a blank record
     $SF['objects'][] = $data['objects'];
     $addBlank        = false;
 
@@ -2453,6 +2513,80 @@ function nuSubformPageRecords($subformID, $o, $hashData) {  //-- get subform row
     }
 
     return $SF;
+}
+
+function nuGetSubformObjectsForOneRecord($parentID, $recordID, $fields, $r, $f, $hashData) {
+
+	$hashData['SUBFORM_RECORD_ID'] = $recordID;
+
+    $o               = '';
+    $OBJ[]           = nuBaseObject($o, $recordID, $hashData);  //--create the Primary Key Record
+    $OBJ[0]->display = '0';
+    $OBJ[0]->field   = 'nuPK';
+    $OBJ[0]->f_id    = $parentID;
+    $OBJ[0]->type    = 'text';
+    $OBJ[0]->width   = '0';
+    $OBJ[0]->format  = '';
+
+	if (nuV('call_type') == 'cloneform' and $recordID != '-1') {
+        $REC[] = '';
+    } else {
+        $REC[] = $recordID;
+    }
+	
+    foreach ($fields as $o) {
+
+        if ($o->sob_all_type == 'listbox') {
+            $OBJ[] = nuGetObjectListbox($r, $o, $recordID, $hashData);
+        }
+        if ($o->sob_all_type == 'checkbox') {
+            $OBJ[] = nuGetObjectCheckbox($r, $o, $recordID, $hashData);
+        }
+        if ($o->sob_all_type == 'dropdown') {
+            $OBJ[] = nuGetObjectDropdown($r, $o, $recordID, $hashData);
+        }
+        if ($o->sob_all_type == 'textarea') {
+            $OBJ[] = nuGetObjectTextarea($r, $o, $recordID, $hashData);
+        }
+        if ($o->sob_all_type == 'text') {
+            $OBJ[] = nuGetObjectText($r, $o, $recordID, $hashData);
+        }
+        if ($o->sob_all_type == 'html') {
+            $OBJ[] = nuGetObjectHtml($o, $recordID, $hashData);
+        }
+        if ($o->sob_all_type == 'button') {
+            $OBJ[] = nuGetObjectButton($o, $recordID, $hashData);
+        }
+        if ($o->sob_all_type == 'display') {
+            $OBJ[] = nuGetObjectDisplay($o, $recordID, $hashData);
+        }
+        if ($o->sob_all_type == 'iframe') {
+            $OBJ[] = nuGetObjectiFrame($o, $hashData);
+        }
+        if ($o->sob_all_type == 'words') {
+            $OBJ[] = nuGetObjectWords($o, $hashData);
+        }
+        if ($o->sob_all_type == 'subform') {
+            $OBJ[] = nuGetObjectSubform($f, $o, $recordID, $hashData);		
+        }
+        if ($o->sob_all_type == 'browse') {
+            $OBJ[] = nuGetObjectBrowse($f, $o, $recordID, $hashData);
+        }
+        if ($o->sob_all_type == 'lookup') {
+            $OBJ[] = nuGetObjectLookup($f, $o, $recordID, $hashData);
+        }       
+		if(isset($OBJ[count($OBJ) - 1]->value)){
+            $REC[] = $OBJ[count($OBJ) - 1]->value;
+        }else{
+            $REC[] = '';
+        }
+        
+    }
+    $J['objects'] = $OBJ;
+    $J['records'] = $REC;
+    $J['edited']  = $last_edited[0];
+	
+    return $J;
 }
 
 //========= end of subform ==========//
