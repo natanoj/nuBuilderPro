@@ -2427,14 +2427,14 @@ function nuSubformPageRecords($subformID, $o, $hashData) {  //-- get subform row
     if (nuErrorFound()) {
         return;
     }
-	
+
 	//get initial record values
     $SF['records'] = array();
     while ($r = db_fetch_array($t)) {
 		$REC = array();
 		$REC[] = $r[$f->parent_primary_key];
 		foreach($fieldArray as $field) {
-			if($field->sob_all_type != 'dropdown' && $field->sob_all_type != 'lookup') {
+			if($field->sob_all_type != 'dropdown' && $field->sob_all_type != 'lookup' && $field->sob_all_type != 'display') {
 				$REC[]= nuFormatValue($r[$field->sob_all_name],$field->sob_text_format);
 			} else {
 				$REC[]= $r[$field->sob_all_name];
@@ -2477,7 +2477,7 @@ function nuSubformPageRecords($subformID, $o, $hashData) {  //-- get subform row
 			}
 			
 			while($lookupObj    = db_fetch_row($lookupQry)){
-				$lookupValues = '["'.$lookupObj[0].'","'.$lookupObj[1].'","'.$lookupObj[2].'"]';
+				$lookupValues = '["'.str_replace('"','\"',$lookupObj[0]).'","'.str_replace('"','\"',$lookupObj[1]).'","'.str_replace('"','\"',$lookupObj[2]).'"]';
 				$j = 0;
 				foreach($SF['records'] as $record) {
 					if($record[$i+1] == $lookupObj[0]) {
@@ -2491,6 +2491,20 @@ function nuSubformPageRecords($subformID, $o, $hashData) {  //-- get subform row
 		$i++;
     }
 	
+	$i = 0;
+	foreach($fieldArray as $field) {
+		if($field->sob_all_type == 'display') {
+			$j = 0;
+			foreach($SF['records'] as $record) {
+				$hashData['SUBFORM_RECORD_ID'] = $SF['records'][$j][0];
+				$OBJ = nuGetObjectDisplay($field, $SF['records'][$j][0], $hashData);
+				$SF['records'][$j][$i+1] = $OBJ->value;
+				$j++;
+			}		
+		}
+		$i++;
+    }
+		
     $data            = nuGetSubformObjectsForOneRecord($subformID, '-1', $fieldArray, $r, $f, $hashData);  //-- add a blank record
     $SF['objects'][] = $data['objects'];
     $addBlank        = false;
