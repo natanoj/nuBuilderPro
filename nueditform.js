@@ -995,9 +995,10 @@ function nuRecordObjects(formType, formTop){
 		
 		if($.inArray(o[i].type , ['text','display','button','checkbox']) != -1){
 			if(o[i].value==null){
-				o[i].value = 0;
+				e.setAttribute('value', '');
+			} else {
+				e.setAttribute('value', o[i].value);
 			}
-			e.setAttribute('value', o[i].value);
 		}
 		
 		if(o[i].type == 'checkbox'){
@@ -1267,7 +1268,6 @@ function nuDisplayEditForm(formObjects,formRecords,formParent,sfI,sfO){
 				tParent   = e.id;
 			}
 			if(subformType == 'f' && firstLoop){  //-- is a edit type subform
-
 
 				firstLoop = false;
 				TabNo     = TabNo + 1;
