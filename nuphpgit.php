@@ -5,8 +5,6 @@
 
 	define('NU_CACHE_TIME_STAMP', 'Y_m_d_H');
 
-	define('GITCACHE',	'GITCACHE');
-	define('GITNEW',	'GITNEW');
 	define('GITERROR',	'GITERROR');
 
 	define('GIT','http://gitcache.nubuilder.net/contents/');
@@ -14,53 +12,43 @@
 
 	define('NUAGENT', 'nuSoftware/nuBuilderPro/AutoUpdater');	
 
-	$download_dest = dirname(__FILE__).DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR;
-	$copy_dest     = dirname(__FILE__).DIRECTORY_SEPARATOR;
+	$tmp_folder	= dirname(__FILE__).DIRECTORY_SEPARATOR.'tmp';
+	$download_dest 	= dirname(__FILE__).DIRECTORY_SEPARATOR.'tmp'.DIRECTORY_SEPARATOR.'nuGit';
+	$copy_dest     	= dirname(__FILE__).DIRECTORY_SEPARATOR;
 
 	define('DOWNLOAD_DEST', $download_dest);
 	define('COPY_DEST',     $copy_dest);
 
-	$exclude_files 	= array('ReadMe.md','ajax-loader.gif','apple-touch-icon.png','config.php','nuBuilder-Logo-medium.png','numove_black.png','numove_red.png','nurefresh_black.png');
+$exclude_files 	= array('ReadMe.md','ajax-loader.gif','apple-touch-icon.png','config.php','nuBuilder-Logo-medium.png','numove_black.png','numove_red.png','nurefresh_black.png');
 	$folders	= array('','nusafephp');
 	$files_list	= array();
 	$errors		= array();
 	$success	= array();
-	$cache		= array();
 	$dbupdate	= array();
-	$finalResult 	= array( 'message'=>'', 'errors'=>array(), 'success'=>array(), 'cache'=>array(), 'dbupdate'=>array() );
+	$finalResult 	= array( 'message'=>'', 'errors'=>array(), 'success'=>array(), 'dbupdate'=>array() );
 	$login 		= checkGlobeadmin($nuConfigDBHost, $nuConfigDBName, $nuConfigDBUser, $nuConfigDBPassword);
 
 	if ( 0 == errorCount() ) {	
 		try {
-    			$writeable = checkIsWriteable($folders, $download_dest, $copy_dest);
+    			$writeable = checkIsWriteable($folders, $tmp_folder, $copy_dest);
 		} catch (Exception $e) {
 			setError("Exception trying to test file permissions");
 		}
 	}
-	
-	if ( 0 == errorCount() ) {
-		$tmp_folder	= setupTmpFolder($folders);
-	}
 
 	if ( 0 == errorCount() ) {
-		$cache		= setupGitCacheFolder($folders);
+		setupTmpFolder($folders);
 	}
-
-	define('GIT_CACHE_DEST', $cache[0]);
 
 	if ( 0 == errorCount() ) {
 		for ( $x=0; $x < count($folders); $x++ ) {
-			buildFilesList($cache, $files_list, GIT, $exclude_files, $folders[$x]);
+			buildFilesListFromGit($files_list, $exclude_files, $folders[$x]);
 		}
 	}
 
-	if ( 0 == errorCount() && $cache[1] == GITNEW ) {
+	if ( 0 == errorCount() ) {
 		downloadFiles($files_list);
 	}	
-
-	if ( 0 == errorCount() ) {
-		backupFiles($tmp_folder, $files_list);
-	}
 
 	if ( 0 == errorCount() ) {
                 copyFiles($files_list);
@@ -79,7 +67,6 @@
 	$successCount 			= count($success);
 	$finalResult['errors'] 		= $errors;
 	$finalResult['success']		= array("$successCount File(s) updated");
-	$finalResult['cache'] 		= $cache;
 	$finalResult['dbupdate']	= $dbupdate;
 
 	$json = json_encode($finalResult);
@@ -202,61 +189,16 @@ function setupSubFolders($folders, $folder) {
 	}	
 }
 
-function setupGitCacheFolder($folders) {
-
-	date_default_timezone_set(@date_default_timezone_get());
-        $objDateTime    = new DateTime('NOW');
-        $dateStr        = $objDateTime->format(NU_CACHE_TIME_STAMP);
-        $cache_folder   = DOWNLOAD_DEST.'GIT_'.$dateStr.'/';
-	$result		= array();
-	$result[0] 	= $cache_folder;
-	$result[2]	= 'CACHE_TIME_'.$dateStr;
-
-	// if folder exists return folder name	
-	if ( is_dir($cache_folder) ) {
-
-		// assume we have a cache to work with
-		$result[1] = GITCACHE;
-		checkSubFolders($folders, $cache_folder);
-	
-	} else {
-
-		// if folder does not exists
-        	@mkdir($cache_folder, 0755);
-	
-		// make sure the mkdir was successful	
-        	if ( is_dir($cache_folder) ) {
-			$result[1] = GITNEW;
-			setupSubFolders($folders, $cache_folder);
-
-        	} else {
-			$result[1] = GITERROR;
-			setError("Error creating cache folder: $cache_folder");
-        	}
-	}
-
-	return $result;
-}
-
 function setupTmpFolder($folders) {
 
-	date_default_timezone_set(@date_default_timezone_get());
-	$objDateTime 	= new DateTime('NOW');
-	$dateStr 	= $objDateTime->format(DateTime::ISO8601);
-	$dateStr 	= str_replace(":", "_", $dateStr);
-	$dateStr 	= str_replace("+", "_", $dateStr);
-	$tmp_folder	= DOWNLOAD_DEST.$dateStr;
-	
-	@mkdir($tmp_folder, 0755);	
-	
-	if ( is_dir($tmp_folder) ) {
-		setupSubFolders($folders, $tmp_folder);
-		return $tmp_folder;
+	@rmdir(DOWNLOAD_DEST);
+	@mkdir(DOWNLOAD_DEST, 0755);	
+
+	if ( is_dir(DOWNLOAD_DEST) ) {
+		setupSubFolders($folders, DOWNLOAD_DEST);
 	} else {
-		setError("Error creating tmp folder: $tmp_folder");
+		setError("Error creating tmp folder: ".DOWNLOAD_DEST);
 	}
-	
-	return '';
 }
 
 function downloadFiles($files) {
@@ -273,30 +215,6 @@ function downloadFiles($files) {
 			setError("Downloading $file->raw_url files sizes do not match $file->download_dest");
 		}
 	}
-}
-
-function backupFiles($tmp_folder, $files) {
-
-	for ( $x=0; $x < count($files); $x++) {
-                $file 	= $files[$x];
-		$source = $file->copy_dest;
-
-		if ( file_exists($source) ) {
-			$folder = $file->folder;
-	
-			if ( $folder == '' ) {
-				$seperator = '';
-			} else {
-				$seperator = DIRECTORY_SEPARATOR;
-			}
-			$dest   = $tmp_folder.DIRECTORY_SEPARATOR.$folder.$seperator.$file->name;	
-			@unlink($dest);
-                	$copy 	= copy($source, $dest);
-			if (!$copy) { 
-				setError("Back up error: $dest");
-			}
-		}
-        }
 }
 
 function copyFiles($files) {
@@ -342,51 +260,11 @@ function errorCount() {
 	return count($errors);
 }
 
-function buildFilesList($cache, &$files_list, $git_url, $exclude_files, $folder = '') {
+function buildFilesListFromGit(&$files_list, $exclude_files, $folder = '') {
 
-	/*
-	if ( $cache[1] == GITNEW ) {
-		buildFilesListFromGit($files_list, $git_url, $exclude_files, $folder);
-	}
-
-	if ( $cache[1] == GITCACHE ) {
-		buildFilesListFromCache($files_list, $cache[0], $folder);
-	}
-	*/
-	buildFilesListFromGit($files_list, $git_url, $exclude_files, $folder);
-}
-
-function buildFilesListFromCache(&$files_list, $cache_folder, $folder) {
-
-	if ( $folder == '' ) {
-        	$seperator = '';
-	} else {
-        	$seperator = DIRECTORY_SEPARATOR;
-	}
-	$search_folder = $cache_folder.$folder.$seperator;
-
-	if ($handle = opendir($search_folder)) {
-		while (false !== ($entry = readdir($handle))) {
-        		if ($entry != "." && $entry != "..") {
-				if ( is_file($search_folder.$entry) ) {	
-					$gitObj = array();
-					$gitObj['name'] = $entry;
-					$gitObj['size'] = filesize($search_folder.$entry);
-					$file = new nuFile($gitObj, $folder);
-                                	array_push($files_list, $file);	
-				}
-        		}
-    		}
-   		closedir($handle);
-	}
-	return $files_list;
-}
-
-function buildFilesListFromGit(&$files_list, $git_url, $exclude_files, $folder = '') {
-
+	$git_url = GIT;	
 	if ( $folder != '') {
 		$git_url = $git_url.$folder.'/';
-
 	}
 
 	$git = doCurl($git_url);
@@ -449,7 +327,7 @@ class nuFile {
 		$this->name 		= $gitObj['name'];
 		$this->git_size 	= $gitObj['size'];
 		$this->raw_url  	= RAW.$folder.$seperator.$gitObj['name'];
-		$this->download_dest	= GIT_CACHE_DEST.$folder.$seperator2.$gitObj['name'];
+		$this->download_dest	= DOWNLOAD_DEST.DIRECTORY_SEPARATOR.$folder.$seperator2.$gitObj['name'];
 		$this->copy_dest	= COPY_DEST.$folder.$seperator2.$gitObj['name'];
 	}
 }
