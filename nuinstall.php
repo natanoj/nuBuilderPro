@@ -1,7 +1,7 @@
 <?php
 	error_reporting( error_reporting() & ~E_NOTICE );
         require_once("config.php");
-        require_once("nuinstall_lib2.php");
+        require_once("nuinstall_lib.php");
 
         session_start();
 
