@@ -1,7 +1,13 @@
 <?php
 	error_reporting( error_reporting() & ~E_NOTICE );
         require_once("config.php");
-        require_once("nuinstall_lib.php");
+	$this_ver = phpversion();
+	$this_ver = intval($this_ver[0]);
+	if ( $this_ver >= 7 ) {
+        	require_once("nuinstall_lib2.php");
+	} else {
+		require_once("nuinstall_lib.php");
+	}
 
         session_start();
 
@@ -97,9 +103,13 @@
 		</form>
 
 		<?php } else {
-			echo $template->getCode();
-			echo "<br>";
-			echo $template->getMessage();	
+			if ( $this_ver >= 7 ) {
+				echo $template->getCode();
+				echo "<br>";
+				echo $template->getMessage();
+			} else {
+				echo "It appears your database server is not configured, <br>please enter a mysql database name, user name<br> and password into your config.php file.";
+			}	
 
 		} ?>
 	</div>
