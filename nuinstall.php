@@ -1,7 +1,7 @@
 <?php
 	error_reporting( error_reporting() & ~E_NOTICE );
         require_once("config.php");
-        require_once("nuinstall_lib.php");
+        require_once("nuinstall_lib2.php");
 
         session_start();
 
@@ -15,6 +15,7 @@
         $template = new nuinstall();
         $template->setDB($_SESSION['DBHost'], $_SESSION['DBName'], $_SESSION['DBUser'], $_SESSION['DBPassword']);
 	$template->checkInstall();
+
 ?>
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
@@ -84,8 +85,8 @@
 				<td>Show full output</td>
 				<td>
         				<select name="showAll">
-                			<option value="n" SELECTED>No</option>
-                			<option value="y">Yes</option>
+                			<option value="n">No</option>
+                			<option value="y" SELECTED>Yes</option>
         				</select>
         			</td>
 			</tr>
@@ -95,10 +96,12 @@
 		<input type="submit" value="Run" style="width: 60px; height: 35px; top: 150px; left: 350px; position: absolute; border-top-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; border-bottom-left-radius: 5px; font-size: 22px; line-height: 22px; background-color: rgb(212, 206, 230);">
 		</form>
 
-		<?php } else { ?>
-			It appears your database server is not configured, <br>please enter a mysql database name, user name<br> and password into your config.php file.
+		<?php } else {
+			echo $template->getCode();
+			echo "<br>";
+			echo $template->getMessage();	
 
-		<?php } ?>
+		} ?>
 	</div>
 
 <?php
@@ -146,7 +149,9 @@
                 		$template->showWarnings();
 				if ( $_POST['showAll'] == "y" ) {
 					echo "<h4>Full Output:</h4>";
-					$template->showContent();	
+					echo "<pre>";
+					$template->showContent();
+					echo "</pre>";	
 				}
 			 echo "</span>";
 		echo "</div>";
