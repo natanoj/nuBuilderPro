@@ -13,10 +13,11 @@ class nuupdatesch {
 	function update() {
 
 		$db	= $this->DBName;
-		$sql 	= "SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '$db' ";
-		$rs 	= $this->runQuery($sql);
+		$sql 	= "SELECT * FROM TABLES WHERE TABLE_SCHEMA=:table_schema ";
+		$values = array(":table_schema"=>$db);
+		$rs 	= $this->runQuery($sql, $values, 'information_schema');
 
-		while($obj = mysql_fetch_object($rs)) {
+		while($obj = $rs->fetch(PDO::FETCH_OBJ) ) {
 
 			$thisTablePrefix = substr($obj->TABLE_NAME, 0, 7);
 
@@ -44,20 +45,25 @@ class nuupdatesch {
                 array_push($this->tables_updated, $table);
 	}
 
-	function runQuery($pSQL) {
+	function runQuery($sql, $values = array(), $DBName = null) {
 
-                $con 		= mysql_connect($this->DBHost, $this->DBUserID, $this->DBPassWord) or die ("Could not connect to database\n");
-                mysql_select_db($this->DBName,$con) or die ("Could not select database\n");
-                $rs 		= mysql_query($pSQL);
-
-                if ( "" !=  mysql_error($con) ) {
-                        $errors[0] = mysql_errno($con);
-                        $errors[1] = mysql_error($con);
-                        $errors[2] = $pSQL;
-                        array_push($this->sqlErrors, $errors);
+		if ( null == $DBName ) {
+                        $DBName = $this->DBName;
                 }
+		$obj = null;
 
-                return $rs;
-        }
+		try {
+			$db = new PDO("mysql:host=".$this->DBHost.";dbname=".$this->DBName.";charset=utf8", $this->DBUserID, $this->DBPassWord, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
+			$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+			$db->exec("USE $DBName");
+			$obj = $db->prepare($sql);
+			$obj->execute($values);
+
+		} catch(Exception $e) {
+                        array_push($this->sqlErrors, $sql);
+                }
+		return $obj;
+	}
+	
 }
 ?>
