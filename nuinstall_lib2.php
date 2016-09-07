@@ -34,10 +34,10 @@ class nuinstall {
                 'default'   => 'UNKOWN',
 		'ok'	    => 'OK'
         );
-        var $message  = '';
-        var $code     = '';
+        var $message  = 'UNKOWNN';
+        var $code     = 'UNKNOWN';
 
-	function __construct($DBHost = null , $DBName = null , $DBUserID = null , $DBPassWord = null , $overrideSetup = false) { 
+	function __construct($DBHost = null, $DBName = null, $DBUserID = null, $DBPassWord = null, $overrideSetup = false) { 
 		$this->addDisplay("construct nuinstall");
 		$this->setDB($DBHost, $DBName, $DBUserID, $DBPassWord);
 		$this->overrideSetup = $overrideSetup;
@@ -79,7 +79,7 @@ class nuinstall {
 
         function setDB($DBHost, $DBName, $DBUserID, $DBPassWord) {
 
-		$this->addDisplay("starting setDB()");
+		$this->addDisplay("starting setDB() :: $DBName");
                 $this->DB['DBHost']       = $DBHost;
                 $this->DB['DBName']       = $DBName;
                 $this->DB['DBUserID']     = $DBUserID;

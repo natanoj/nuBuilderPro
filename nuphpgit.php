@@ -110,15 +110,28 @@ function checkGlobeadmin($nuConfigDBHost, $nuConfigDBName, $nuConfigDBUser, $nuC
 function updateDB($nuConfigDBHost, $nuConfigDBName, $nuConfigDBUser, $nuConfigDBPassword) {
 
 	$result = array();
-        require_once("nuinstall_lib.php");
 
-        $template = new nuinstall();
-        $template->setDB($nuConfigDBHost, $nuConfigDBName, $nuConfigDBUser, $nuConfigDBPassword);
-        $template->removeColumns = true;
-        $template->removeIndexes = true;
+	$this_ver = phpversion();
+        $this_ver = intval($this_ver[0]);
 
-        $template->run();
-	$result = $template->returnArrayResults();
+        if ( $this_ver >= 7 ) {
+                require_once("nuinstall_lib2.php");
+		$template = new nuinstall($nuConfigDBHost, $nuConfigDBName, $nuConfigDBUser, $nuConfigDBPassword, false);
+		$template->checkInstall();
+		$template->run();
+		$result         = $template->returnArrayResults();
+		$result['info'] = bin2hex($template->display);
+        } else {
+                require_once("nuinstall_lib.php");
+        	$template = new nuinstall();
+        	$template->setDB($nuConfigDBHost, $nuConfigDBName, $nuConfigDBUser, $nuConfigDBPassword);
+       		$template->removeColumns = true;
+        	$template->removeIndexes = true;
+		$template->checkInstall();
+        	$template->run();
+		$result         = $template->returnArrayResults();
+		$result['info'] = bin2hex('');
+	}
 	return $result;	
 }
 
