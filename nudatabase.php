@@ -9,8 +9,13 @@ $DBName                      = $_SESSION['DBName'];
 $DBUser                      = $_SESSION['DBUser'];
 $DBPassword                  = $_SESSION['DBPassword'];
 
-$nuDB = new PDO("mysql:host=$DBHost;dbname=$DBName;charset=utf8", $DBUser, $DBPassword, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
-$nuDB->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+$this_ver = phpversion();
+$this_ver = intval($this_ver[0]);
+if ( $this_ver >= 7 ) {
+	require_once("nudatabase7.php");
+} else {
+	require_once("nudatabase5.php");
+}	
 
 $GLOBALS['nuSetup']          = db_setup();
 
