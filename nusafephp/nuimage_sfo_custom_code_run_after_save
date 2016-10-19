@@ -19,7 +19,7 @@ function nu_insertBlob() {
     $uploaddir      = sys_get_temp_dir();
     $this_file      = $uploaddir . '/' . $name;
     $blob           = fopen($this_file, 'rb');
-    $sql            = "UPDATE zzzsys_file SET sfi_blob = :blob, sfi_name = :name, sfi_type = :type, sfi_size = :size, zzzsys_file_log_changed_at = :date";
+    $sql            = "UPDATE zzzsys_file SET sfi_blob = :blob, sfi_name = :name, sfi_type = :type, sfi_size = :size, zzzsys_file_log_changed_at = :date WHERE zzzsys_file_id = '$id' ";
     $this_db_obj    = $this_db->prepare($sql);
 
     $this_db_obj->bindParam(':blob', $blob, PDO::PARAM_LOB);
