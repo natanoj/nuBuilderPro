@@ -290,44 +290,6 @@ LOCK TABLES `zzzsys_file` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `zzzsys_file2`
---
-
-DROP TABLE IF EXISTS `zzzsys_file2`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `zzzsys_file2` (
-  `zzzsys_file_id` varchar(25) NOT NULL DEFAULT '',
-  `sfi_code` varchar(10) DEFAULT NULL,
-  `sfi_description` text,
-  `sfi_type` varchar(50) NOT NULL,
-  `sfi_size` varchar(10) NOT NULL,
-  `sfi_width` int(11) NOT NULL,
-  `sfi_height` int(11) NOT NULL,
-  `sfi_name` varchar(255) NOT NULL,
-  `sfi_group` varchar(200) DEFAULT NULL,
-  `sfi_blob` longblob,
-  `zzzsys_file_log_added_at` datetime NOT NULL,
-  `zzzsys_file_log_added_by` varchar(25) NOT NULL,
-  `zzzsys_file_log_changed_at` datetime NOT NULL,
-  `zzzsys_file_log_changed_by` varchar(25) NOT NULL,
-  `zzzsys_file_log_viewed_at` datetime NOT NULL,
-  `zzzsys_file_log_viewed_by` varchar(25) NOT NULL,
-  PRIMARY KEY (`zzzsys_file_id`),
-  KEY `sfi_code` (`sfi_code`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `zzzsys_file2`
---
-
-LOCK TABLES `zzzsys_file2` WRITE;
-/*!40000 ALTER TABLE `zzzsys_file2` DISABLE KEYS */;
-/*!40000 ALTER TABLE `zzzsys_file2` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `zzzsys_form`
 --
 
@@ -871,4 +833,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-10-26 16:11:41
+-- Dump completed on 2016-10-26 16:15:10
