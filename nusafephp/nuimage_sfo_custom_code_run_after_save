@@ -1,34 +1,21 @@
-$J = json_decode("#FILES#");
-
-if($J[0]->name == ''){return;}
-
-nu_insertBlob();
-
-function nu_insertBlob() {
-
-    include("config.php");
-    
+if ( '#tmp_image_table_name#' !== '' ) {
+    $tmp_image_table_name = '#tmp_image_table_name#';
     $dt             = new DateTime();
     $date           = $dt->format('Y-m-d H:i:s');
-    $filesAry       = json_decode("#FILES#");
     $id             = "#RECORD_ID#";
-    $this_db        = new PDO("mysql:host=$nuConfigDBHost;dbname=$nuConfigDBName;charset=utf8", $nuConfigDBUser, $nuConfigDBPassword, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
-    $name           = $filesAry[0]->name;
-    $type           = $filesAry[0]->type;
-    $size           = $filesAry[0]->size;
-    $uploaddir      = sys_get_temp_dir();
-    $this_file      = $uploaddir . '/' . $name;
-    $blob           = fopen($this_file, 'rb');
-    $sql            = "UPDATE zzzsys_file SET sfi_blob = :blob, sfi_name = :name, sfi_type = :type, sfi_size = :size, zzzsys_file_log_changed_at = :date WHERE zzzsys_file_id = '$id' ";
-    $this_db_obj    = $this_db->prepare($sql);
-
-    $this_db_obj->bindParam(':blob', $blob, PDO::PARAM_LOB);
-    $this_db_obj->bindParam(':name', $name);
-    $this_db_obj->bindParam(':type', $type);
-    $this_db_obj->bindParam(':size', $size);
-    $this_db_obj->bindParam(':date', $date);    
-    $this_db_obj->execute();
-
-    unlink($this_file);
-
+    
+    $sql            = "
+    UPDATE zzzsys_file SET 
+    sfi_type    = (SELECT sfi_type FROM $tmp_image_table_name), 
+    sfi_size    = (SELECT sfi_size FROM $tmp_image_table_name), 
+    sfi_width   = (SELECT sfi_width FROM $tmp_image_table_name),
+    sfi_height  = (SELECT sfi_height FROM $tmp_image_table_name),
+    sfi_name    = (SELECT sfi_name FROM $tmp_image_table_name),
+    sfi_blob    = (SELECT sfi_blob FROM $tmp_image_table_name),
+    zzzsys_file_log_changed_at = '$date'  
+    WHERE zzzsys_file_id = '$id' ";
+    
+    nuRunQuery($sql);
+    
+    nuRunQuery("DROP TABLE IF EXISTS `$tmp_image_table_name`");
 }
