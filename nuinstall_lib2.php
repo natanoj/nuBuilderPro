@@ -318,7 +318,7 @@ class nuinstall {
                         $real_column_sql .= "WHERE `TABLE_SCHEMA`=:table_schema ";
                         $real_column_sql .= "AND `TABLE_NAME`=:table_name ";
                         $real_column_sql .= "AND `COLUMN_NAME`=:column_name ";
-			$values           = array(":table_schema" => $DBName, ":table_name" => $template_table, ":column_name" => $column_name);
+			$values           = array(":table_schema" => $DBName, ":table_name" => $real_table, ":column_name" => $column_name);
                         $real_column_rs   = $this->runQuery($real_column_sql, $values, 'information_schema');
 			$real_column_obj  = $real_column_rs->fetch(PDO::FETCH_OBJ);
  
