@@ -99,8 +99,16 @@ function buildHeaderHtml($logged_in) {
         	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">
         	<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
         	<title>nuBuilder Dropzone</title>
-        	<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js\"></script>
 	";
+	$result .= "
+	<link rel=\"stylesheet\" href=\"jquery/jquery-ui.css\" />
+	<script src=\"jquery/jquery-1.8.3.js\" type='text/javascript'></script>
+	<script src=\"jquery/jquery-ui.js\" type='text/javascript'></script>
+	";
+	$result .= "
+	<style>body {margin: 0;font-family: \"Helvetica Neue\", Helvetica, Arial, sans-serif;font-size: 13px;line-height: 18px;color: #202020;background-color: ##f4f4f4;}</style>
+	";
+
 
 	if ( $logged_in === true ) {
 		$result .= "
@@ -128,6 +136,12 @@ function buildHeaderHtml($logged_in) {
                                 	self.on(\"queuecomplete\", function (progress) {
 						if( typeof parent.nuSetEdited == 'function') {  
 							parent.nuSetEdited();
+						}
+						if( typeof window.nuSetEdited == 'function') {
+                                                        window.nuSetEdited();
+                                                }
+						if( typeof window.top.nuSetEdited == 'function') {
+							window.top.nuSetEdited();
 						}
                                		});
                                 	self.on(\"removedfile\", function (file) {
