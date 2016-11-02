@@ -83,7 +83,13 @@ function getUploadResult($num) {
 function buildHeaderHtml($logged_in) {
 
 	$max = getFileMax();
-	$accepted_files = '".png,.jpg,.gif,.bmp,.jpeg"';
+
+	if ( isset($_REQUEST['acp']) ) {
+		$accepted_files = '"'.$_REQUEST['acp'].'"';
+	} else {
+		//$accepted_files = '".png,.jpg,.gif,.bmp,.jpeg"';
+		$accepted_files = '""';
+	}
 
 	$result = "
 	<!DOCTYPE html>
@@ -120,7 +126,9 @@ function buildHeaderHtml($logged_in) {
                                 	self.on(\"totaluploadprogress\", function (progress) {
                                 	});
                                 	self.on(\"queuecomplete\", function (progress) {
-                                        	//self.disable();
+						if( typeof parent.nuSetEdited == 'function') {  
+							parent.nuSetEdited();
+						}
                                		});
                                 	self.on(\"removedfile\", function (file) {
                                 	});
@@ -199,7 +207,17 @@ function createDropZoneImageTempTable($table_name = null) {
 		$table_name 		= '___nu'.uniqid('1').'___';
 	}
 
-	$sql = "CREATE TABLE IF NOT EXISTS $table_name (sfi_message varchar(255) NOT NULL, sfi_type varchar(50) NOT NULL, sfi_size varchar(10) NOT NULL, sfi_width int(11) NOT NULL, sfi_height int(11) NOT NULL,sfi_name varchar(255) NOT NULL,sfi_blob longblob)";
+	$sql = "CREATE TABLE IF NOT EXISTS $table_name (
+	dz_id varchar(25) NOT NULL DEFAULT '', 
+	dz_message varchar(255) NOT NULL, 
+	dz_type varchar(50) NOT NULL, 
+	dz_size varchar(10) NOT NULL, 
+	dz_width int(11) NOT NULL, 
+	dz_height int(11) NOT NULL, 
+	dz_name varchar(255) NOT NULL, 
+	dz_blob longblob,
+	PRIMARY KEY (dz_id)
+	)";
 
 	$db = new PDO("mysql:host=$nuConfigDBHost;dbname=$nuConfigDBName;charset=utf8", $nuConfigDBUser, $nuConfigDBPassword, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
         $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -218,28 +236,32 @@ function insertDropZoneFile($table_name, $name, $type, $tmp_name, $error, $size)
         $nuConfigDBUser         = $_SESSION['DBUser'];
         $nuConfigDBPassword     = $_SESSION['DBPassword'];
 
-	$this_db        = new PDO("mysql:host=$nuConfigDBHost;dbname=$nuConfigDBName;charset=utf8",$nuConfigDBUser,$nuConfigDBPassword,array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
-	$blob           = fopen($tmp_name, 'rb');
-	$blobStr        = file_get_contents($tmp_name);
-	$im             = imagecreatefromstring($blobStr);
-    
+	$this_db        	= new PDO("mysql:host=$nuConfigDBHost;dbname=$nuConfigDBName;charset=utf8",$nuConfigDBUser,$nuConfigDBPassword,array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
+	$blob           	= fopen($tmp_name, 'rb');
+	$blobStr        	= file_get_contents($tmp_name);
+	$im             	= imagecreatefromstring($blobStr);
+	$message 		= getUploadResult($error);    
+	$id     		= getDropZoneNewId();
+
 	if ($im !== false) {
         	$width  = imagesx($im);
         	$height = imagesy($im);
+	} else {
+		$width  = 0;
+                $height = 0;
 	}
 
-	$message = getUploadResult($error);
+	$sql 			= "INSERT INTO $table_name (dz_id, dz_message, dz_type, dz_size, dz_width, dz_height, dz_name, dz_blob) VALUES (:id, :message, :type, :size, :width, :height, :name, :blob)";
+	$this_db_obj    	= $this_db->prepare($sql);
 
-	$sql 		= "INSERT INTO $table_name (sfi_message, sfi_type, sfi_size, sfi_width, sfi_height, sfi_name, sfi_blob) VALUES (:message, :type, :size, :width, :height, :name, :blob)";
-	$this_db_obj    = $this_db->prepare($sql);
-
-	$this_db_obj->bindParam(':blob', $blob, PDO::PARAM_LOB);
+	$this_db_obj->bindParam(':id', $id);
 	$this_db_obj->bindParam(':message', $message);
-	$this_db_obj->bindParam(':name', $name);
 	$this_db_obj->bindParam(':type', $type);
 	$this_db_obj->bindParam(':size', $size);
 	$this_db_obj->bindParam(':width', $width);
 	$this_db_obj->bindParam(':height', $height);
+	$this_db_obj->bindParam(':name', $name);
+	$this_db_obj->bindParam(':blob', $blob, PDO::PARAM_LOB);
 	$this_db_obj->execute();
 
 	unlink($tmp_name);
@@ -285,6 +307,15 @@ function checkDropZoneLoggedIn($session_id, $user_id) {
 	} else {
 		return false;
 	}
+
+}
+
+function getDropZoneNewId() {
+
+	$i   = uniqid();
+	$s   = md5($i);
+	while($i == uniqid()){}
+    	return uniqid().$s[0].$s[1];
 
 }
 

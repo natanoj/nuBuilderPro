@@ -1,0 +1,36 @@
+// Check if a table was created
+$table_name = '#dropzonetable#';
+$sql        = "SHOW TABLES LIKE '$table_name' "; 
+$rs         = nuRunQuery($sql);
+$rows   =  db_num_rows($rs);
+
+// If table exist, loop thru it and get the file information and blob to use wherever you want.
+// In this example will insert a new record in the default zzzsys_file table
+if ( $rows == '1' ) {
+
+    $dt             = new DateTime();
+    $date           = $dt->format('Y-m-d H:i:s');
+    
+    $sql            = "SELECT * FROM $table_name";
+    $rs             = nuRunQuery($sql);
+  
+    while ( $obj = db_fetch_object($rs) ) {
+        $dz_id          = $obj->dz_id; 
+        $id             = nuID();
+        $code           = substr(str_shuffle(MD5(microtime())), 0, 10);
+        $desc           = $obj->dz_message;
+        $dz_type        = $obj->dz_type;
+        $dz_size        = $obj->dz_size;
+        $dz_width       = $obj->dz_width;
+        $dz_height      = $obj->dz_height;
+        $dz_name        = $obj->dz_name;
+        
+        $sql            = "
+        INSERT INTO zzzsys_file (zzzsys_file_id, sfi_code, sfi_group, sfi_description, sfi_type, sfi_size, sfi_width, sfi_height, sfi_name, sfi_blob, zzzsys_file_log_changed_at) 
+        VALUES ('$id', '$code', 'dropzone', '$desc', '$dz_type', '$dz_size', '$dz_width', '$dz_height', '$dz_name', (SELECT $table_name.dz_blob FROM $table_name WHERE $table_name.dz_id = '$dz_id'), '$date')";
+        nuRunQuery($sql);
+    }
+
+    nuRunQuery("DROP TABLE IF EXISTS $table_name ");
+}
+
