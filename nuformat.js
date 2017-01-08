@@ -167,8 +167,8 @@ function nuFormatter(){
 					aNew[1] = this.mmm[String(aValue[1]).toLowerCase()];
 				}
 			}else if(aFormat[0] == 'yyyy'){      //-- Year is first
-				aNew[0]	= y;
-				aSQL[0] = y;
+				aNew[0]	= aValue[0];
+				aSQL[0] = aValue[0];
 				aNew[2] = this.dd[aValue[2]];
 				aSQL[2]	= this.dd[aValue[2]];
 				aSQL[1]	= this.mm[String(aValue[1]).toLowerCase()];
